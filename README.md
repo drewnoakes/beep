@@ -1,4 +1,6 @@
-﻿# beep
+# beep
+
+[![Beep NuGet version](https://img.shields.io/nuget/v/beep.svg)](https://www.nuget.org/packages/beep/)
 
 Command line tool that makes a beep/bell noise.
 

@@ -1,1 +1,1 @@
-﻿System.Console.Write("\u0007");
+﻿System.Console.Write('\a');

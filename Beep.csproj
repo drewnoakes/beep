@@ -22,6 +22,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Using Include="System.Console" Static="true" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="nupkg\**" />
   </ItemGroup>
 

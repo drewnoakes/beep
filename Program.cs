@@ -1,1 +1,1 @@
-﻿Console.Write('\a');
+﻿Write('\a');

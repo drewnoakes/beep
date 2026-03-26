@@ -1,102 +1,125 @@
 name: Release
 
 on:
-  push:
-    tags: ['*']
-  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_VERSION: '10.x'
+  CONFIGURATION: Release
+  VERSION: ${{ github.event.release.tag_name }}
 
 jobs:
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: '10.x'
-
-      - name: Pack win-x64
-        run: dotnet pack -r win-x64 -c Release -p:Version=${{ github.ref_name }}
-
-      - name: Pack win-arm64
-        run: dotnet pack -r win-arm64 -c Release -p:Version=${{ github.ref_name }}
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: nupkg-windows
-          path: *.nupkg
-
-  build-linux:
+  pack-pointer:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-
       - uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '10.x'
-
-      - name: Install Native AOT prerequisites
-        run: sudo apt-get install -y clang zlib1g-dev
-
-      - name: Pack linux-x64
-        run: dotnet pack -r linux-x64 -c Release -p:Version=${{ github.ref_name }}
-
-      - name: Pack linux-arm64
-        run: dotnet pack -r linux-arm64 -c Release -p:Version=${{ github.ref_name }}
-
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - run: dotnet pack -c ${{ env.CONFIGURATION }} -p:Version=${{ env.VERSION }}
       - uses: actions/upload-artifact@v7
         with:
-          name: nupkg-linux
-          path: *.nupkg
+          name: package-pointer
+          path: '*.nupkg'
 
-  build-macos:
+  pack-any:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - run: dotnet pack -r any -c ${{ env.CONFIGURATION }} -p:PublishAot=false -p:Version=${{ env.VERSION }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: package-any
+          path: '*.nupkg'
+
+  pack-windows:
+    strategy:
+      matrix:
+        rid: [win-x64, win-arm64]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - run: dotnet pack -r ${{ matrix.rid }} -c ${{ env.CONFIGURATION }} -p:Version=${{ env.VERSION }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: package-${{ matrix.rid }}
+          path: '*.nupkg'
+
+  pack-linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: linux-x64
+            runner: ubuntu-latest
+          - rid: linux-arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - run: sudo apt-get install -y clang zlib1g-dev
+      - run: dotnet pack -r ${{ matrix.rid }} -c ${{ env.CONFIGURATION }} -p:Version=${{ env.VERSION }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: package-${{ matrix.rid }}
+          path: '*.nupkg'
+
+  pack-macos:
+    strategy:
+      matrix:
+        rid: [osx-x64, osx-arm64]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v6
-
       - uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '10.x'
-
-      - name: Pack osx-x64
-        run: dotnet pack -r osx-x64 -c Release -p:Version=${{ github.ref_name }}
-
-      - name: Pack osx-arm64
-        run: dotnet pack -r osx-arm64 -c Release -p:Version=${{ github.ref_name }}
-
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - run: dotnet pack -r ${{ matrix.rid }} -c ${{ env.CONFIGURATION }} -p:Version=${{ env.VERSION }}
       - uses: actions/upload-artifact@v7
         with:
-          name: nupkg-macos
-          path: *.nupkg
+          name: package-${{ matrix.rid }}
+          path: '*.nupkg'
 
   publish:
-    needs: [build-windows, build-linux, build-macos]
+    needs: [pack-pointer, pack-any, pack-windows, pack-linux, pack-macos]
     runs-on: ubuntu-latest
     environment: release
     permissions:
       id-token: write
-
     steps:
-      - uses: actions/checkout@v6
-
       - uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '10.x'
-
-      - name: Pack top-level pointer and framework-dependent (any) packages
-        run: dotnet pack -c Release -p:Version=${{ github.ref_name }}
-
-      - name: Download RID-specific packages
-        uses: actions/download-artifact@v8
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/download-artifact@v8
         with:
-          path: .
+          path: packages
+          pattern: package-*
           merge-multiple: true
-
-      - name: NuGet login via trusted publishing
+      - name: NuGet login (OIDC)
         uses: NuGet/login@v1
         id: login
         with:
           user: ${{ secrets.NUGET_USER }}
-
-      - name: Push all packages to NuGet
-        run: dotnet nuget push "*.nupkg" --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+      - name: Push RID-specific and 'any' packages
+        run: |
+          for pkg in packages/Beep.[a-z]*.nupkg; do
+            dotnet nuget push "$pkg" --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+          done
+      - name: Push pointer package
+        run: |
+          for pkg in packages/Beep.[0-9]*.nupkg; do
+            dotnet nuget push "$pkg" --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+          done

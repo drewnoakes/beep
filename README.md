@@ -20,3 +20,11 @@ beep
 ```
 
 That's it!
+
+## Troubleshooting
+
+If you don't hear a beep, your terminal may have the bell muted.
+
+- **Windows Terminal** — Settings → your profile → Advanced → Bell notification style → Audible
+- **VS Code terminal** — add `"terminal.integrated.enableBell": true` to settings
+- **macOS Terminal** — Preferences → Profiles → Advanced → Bell → check Audible bell

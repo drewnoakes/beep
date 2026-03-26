@@ -9,9 +9,9 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.x'
 
@@ -21,7 +21,7 @@ jobs:
       - name: Pack win-arm64
         run: dotnet pack -r win-arm64 -c Release
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: nupkg-windows
           path: nupkg/*.nupkg
@@ -29,9 +29,9 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.x'
 
@@ -44,7 +44,7 @@ jobs:
       - name: Pack linux-arm64
         run: dotnet pack -r linux-arm64 -c Release
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: nupkg-linux
           path: nupkg/*.nupkg
@@ -52,9 +52,9 @@ jobs:
   build-macos:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.x'
 
@@ -64,7 +64,7 @@ jobs:
       - name: Pack osx-arm64
         run: dotnet pack -r osx-arm64 -c Release
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: nupkg-macos
           path: nupkg/*.nupkg
@@ -77,9 +77,9 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.x'
 
@@ -87,7 +87,7 @@ jobs:
         run: dotnet pack -c Release
 
       - name: Download RID-specific packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: nupkg
           merge-multiple: true

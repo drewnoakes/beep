@@ -89,7 +89,7 @@ jobs:
       - name: Download RID-specific packages
         uses: actions/download-artifact@v8
         with:
-          path: nupkg
+          path: .
           merge-multiple: true
 
       - name: NuGet login via trusted publishing

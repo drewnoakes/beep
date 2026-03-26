@@ -20,11 +20,11 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-      - run: dotnet pack -c ${{ env.CONFIGURATION }} -p:Version=${{ env.VERSION }}
+      - run: dotnet pack -c ${{ env.CONFIGURATION }} -p:Version=${{ env.VERSION }} --output ./nupkgs
       - uses: actions/upload-artifact@v7
         with:
           name: package-pointer
-          path: '**/*.nupkg'
+          path: nupkgs/*.nupkg
 
   pack-any:
     runs-on: ubuntu-latest
@@ -33,11 +33,11 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-      - run: dotnet pack -r any -c ${{ env.CONFIGURATION }} -p:PublishAot=false -p:Version=${{ env.VERSION }}
+      - run: dotnet pack -r any -c ${{ env.CONFIGURATION }} -p:PublishAot=false -p:Version=${{ env.VERSION }} --output ./nupkgs
       - uses: actions/upload-artifact@v7
         with:
           name: package-any
-          path: '**/*.nupkg'
+          path: nupkgs/*.nupkg
 
   pack-windows:
     strategy:
@@ -49,11 +49,11 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-      - run: dotnet pack -r ${{ matrix.rid }} -c ${{ env.CONFIGURATION }} -p:Version=${{ env.VERSION }}
+      - run: dotnet pack -r ${{ matrix.rid }} -c ${{ env.CONFIGURATION }} -p:Version=${{ env.VERSION }} --output ./nupkgs
       - uses: actions/upload-artifact@v7
         with:
           name: package-${{ matrix.rid }}
-          path: '**/*.nupkg'
+          path: nupkgs/*.nupkg
 
   pack-linux:
     strategy:
@@ -71,11 +71,11 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
       - run: sudo apt-get install -y clang zlib1g-dev
-      - run: dotnet pack -r ${{ matrix.rid }} -c ${{ env.CONFIGURATION }} -p:Version=${{ env.VERSION }}
+      - run: dotnet pack -r ${{ matrix.rid }} -c ${{ env.CONFIGURATION }} -p:Version=${{ env.VERSION }} --output ./nupkgs
       - uses: actions/upload-artifact@v7
         with:
           name: package-${{ matrix.rid }}
-          path: '**/*.nupkg'
+          path: nupkgs/*.nupkg
 
   pack-macos:
     strategy:
@@ -87,11 +87,11 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-      - run: dotnet pack -r ${{ matrix.rid }} -c ${{ env.CONFIGURATION }} -p:Version=${{ env.VERSION }}
+      - run: dotnet pack -r ${{ matrix.rid }} -c ${{ env.CONFIGURATION }} -p:Version=${{ env.VERSION }} --output ./nupkgs
       - uses: actions/upload-artifact@v7
         with:
           name: package-${{ matrix.rid }}
-          path: '**/*.nupkg'
+          path: nupkgs/*.nupkg
 
   publish:
     needs: [pack-pointer, pack-any, pack-windows, pack-linux, pack-macos]

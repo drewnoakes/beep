@@ -17,7 +17,6 @@
   <PropertyGroup>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>beep</ToolCommandName>
-    <PackageOutputPath>./nupkg</PackageOutputPath>
     <Description>Plays a beep on the command line, useful to notify you when some long-running process completes. It does this by playing the ASCII "BEL" character.</Description>
     <Copyright>Drew Noakes</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -29,10 +28,6 @@
 
   <ItemGroup>
     <Using Include="System.Console" Static="true" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="nupkg\**" />
   </ItemGroup>
 
   <ItemGroup>

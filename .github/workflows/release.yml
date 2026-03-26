@@ -24,7 +24,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: nupkg-windows
-          path: nupkg/*.nupkg
+          path: *.nupkg
 
   build-linux:
     runs-on: ubuntu-latest
@@ -47,7 +47,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: nupkg-linux
-          path: nupkg/*.nupkg
+          path: *.nupkg
 
   build-macos:
     runs-on: macos-latest
@@ -67,7 +67,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: nupkg-macos
-          path: nupkg/*.nupkg
+          path: *.nupkg
 
   publish:
     needs: [build-windows, build-linux, build-macos]
@@ -99,4 +99,4 @@ jobs:
           user: ${{ secrets.NUGET_USER }}
 
       - name: Push all packages to NuGet
-        run: dotnet nuget push "nupkg/*.nupkg" --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+        run: dotnet nuget push "*.nupkg" --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json

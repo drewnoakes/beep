@@ -15,7 +15,6 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>1.2.0</Version>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>beep</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>

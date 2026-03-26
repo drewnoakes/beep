@@ -1,0 +1,102 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Pack win-x64
+        run: dotnet pack -r win-x64 -c Release
+
+      - name: Pack win-arm64
+        run: dotnet pack -r win-arm64 -c Release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nupkg-windows
+          path: nupkg/*.nupkg
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Install Native AOT prerequisites
+        run: sudo apt-get install -y clang zlib1g-dev
+
+      - name: Pack linux-x64
+        run: dotnet pack -r linux-x64 -c Release
+
+      - name: Pack linux-arm64
+        run: dotnet pack -r linux-arm64 -c Release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nupkg-linux
+          path: nupkg/*.nupkg
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Pack osx-x64
+        run: dotnet pack -r osx-x64 -c Release
+
+      - name: Pack osx-arm64
+        run: dotnet pack -r osx-arm64 -c Release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nupkg-macos
+          path: nupkg/*.nupkg
+
+  publish:
+    needs: [build-windows, build-linux, build-macos]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Pack top-level pointer and framework-dependent (any) packages
+        run: dotnet pack -c Release
+
+      - name: Download RID-specific packages
+        uses: actions/download-artifact@v4
+        with:
+          path: nupkg
+          merge-multiple: true
+
+      - name: NuGet login via trusted publishing
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Push all packages to NuGet
+        run: dotnet nuget push "nupkg/*.nupkg" --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
